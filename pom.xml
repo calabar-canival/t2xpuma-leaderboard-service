@@ -174,25 +174,25 @@
 				</configuration>
 			</plugin>
 
-            <!-- FOR READING .ENV FILES-->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>properties-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <executions>
-                    <execution>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>read-project-properties</goal>
-                        </goals>
-                        <configuration>
-                            <files>
-                                <file>.env</file>
-                            </files>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+<!--            &lt;!&ndash; FOR READING .ENV FILES&ndash;&gt;-->
+<!--            <plugin>-->
+<!--                <groupId>org.codehaus.mojo</groupId>-->
+<!--                <artifactId>properties-maven-plugin</artifactId>-->
+<!--                <version>1.2.1</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <phase>initialize</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>read-project-properties</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <files>-->
+<!--                                <file>.env</file>-->
+<!--                            </files>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
 		</plugins>
 	</build>
 
