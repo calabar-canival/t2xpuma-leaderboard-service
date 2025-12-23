@@ -8,13 +8,12 @@ import javax.sql.DataSource;
 
 @Configuration
 public class FlywayConfig {
-
     @Bean
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
-                .baselineOnMigrate(false)
+                .baselineOnMigrate(true)
                 .load();
         flyway.migrate();
         return flyway;
