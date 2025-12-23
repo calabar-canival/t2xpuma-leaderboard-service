@@ -13,7 +13,9 @@ public class FlywayConfig {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
-                .baselineOnMigrate(true)
+                .baselineOnMigrate(false)
+                .schemas("leaderboard-db")
+                .defaultSchema("leaderboard-db")
                 .load();
         flyway.migrate();
         return flyway;

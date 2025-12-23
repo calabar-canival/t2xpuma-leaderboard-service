@@ -31,6 +31,8 @@ flyway:
   url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
   password: ${POSTGRES_PASSWORD}
   user: ${POSTGRES_USER}
+  schemas: leaderboard-db
+  default-schema: leaderboard-db
 
 yellow-dot:
   base-url: ${YELLOW-DOT_BASE_URL}
