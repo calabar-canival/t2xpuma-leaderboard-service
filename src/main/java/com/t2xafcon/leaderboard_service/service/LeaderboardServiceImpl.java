@@ -62,17 +62,22 @@ public class LeaderboardServiceImpl implements LeaderboardService{
     @Async
     @Transactional
     public void onPhoneNumberUpdate(PhoneNumberUpdatedEvent event) {
-        UserPersistResponseDTO userPersistResponseDTO = sendUserPhoneNumber(event.phoneNumber());
+        try {
+            UserPersistResponseDTO userPersistResponseDTO = sendUserPhoneNumber(event.phoneNumber());
 
-        User user = User.builder()
-                .phoneNumber(userPersistResponseDTO.data().msisdn())
-                .points(userPersistResponseDTO.data().points())
-                .channel(userPersistResponseDTO.data().channel())
-                .predictionSubscriptionStatus(userPersistResponseDTO.data().isActive())
-                .build();
+            User user = User.builder()
+                    .phoneNumber(userPersistResponseDTO.data().msisdn())
+                    .points(userPersistResponseDTO.data().points())
+                    .channel(userPersistResponseDTO.data().channel())
+                    .predictionSubscriptionStatus(userPersistResponseDTO.data().isActive())
+                    .build();
 
-        if(!userRepository.existsByPhoneNumber(user.getPhoneNumber())){
-            userRepository.save(user);
+            if (!userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+                userRepository.save(user);
+            }
+
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -82,7 +87,7 @@ public class LeaderboardServiceImpl implements LeaderboardService{
     public UserPersistResponseDTO sendUserPhoneNumber(String phoneNumber) {
         // send phone number to yellow dot
         return yellowDotWebClient.get()
-                .uri(uri -> uri.path("/auth/status").queryParam("msisdn", phoneNumber).build())
+                .uri(uri -> uri.path("/api/auth/status").queryParam("msisdn", phoneNumber).build())
                 .headers(h -> h.set("Authorization", getAuthHeader(yellowDotApiKey)))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)

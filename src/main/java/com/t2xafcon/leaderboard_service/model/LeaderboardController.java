@@ -8,10 +8,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +38,19 @@ public class LeaderboardController {
     public ResponseEntity<ApiResponseBody<Map<String, String>>> getUserPhoneNumber(
             @PathVariable String phoneNumber
     ){
-        //pass into phone number update event
-        leaderboardService.handlePhoneNumberUpdate(phoneNumber);
-
         Map<String, String> response = new HashMap<>();
-        response.put("success", "Phone number updated successfully");
-        return ResponseEntity.ok(ApiResponseBody.success(response));
+        try {
+            //pass into phone number update event
+            leaderboardService.handlePhoneNumberUpdate(phoneNumber);
+            response.put("success", "Phone number updated successfully");
+            return ResponseEntity.ok(ApiResponseBody.success(response));
+        } catch (RuntimeException e) {
+            response.put("error", e.getMessage());
+            List<String> errors = new ArrayList<>();
+            errors.add(response.get("error"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponseBody.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), errors));
+
+        }
     }
 
     @GetMapping("/leaderboard/top-ranking/{rankLimit}")
