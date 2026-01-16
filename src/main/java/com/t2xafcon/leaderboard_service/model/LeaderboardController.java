@@ -30,27 +30,27 @@ public class LeaderboardController {
         this.leaderboardService = leaderboardService;
     }
 
-    @PostMapping("/msisdn/{phoneNumber}")
-    @ApiResponse(description = "Receives phone number from frontend", responseCode = "200",
-            content = @Content(contentSchema = @Schema(implementation = HashMap.class))
-    )
-    public ResponseEntity<ApiResponseBody<Map<String, String>>> getUserPhoneNumber(
-            @PathVariable String phoneNumber
-    ){
-        Map<String, String> response = new HashMap<>();
-        try {
-            //pass into phone number update event
-            leaderboardService.handlePhoneNumberUpdate(phoneNumber);
-            response.put("success", "Phone number updated successfully");
-            return ResponseEntity.ok(ApiResponseBody.success(response));
-        } catch (RuntimeException e) {
-            response.put("error", e.getMessage());
-            List<String> errors = new ArrayList<>();
-            errors.add(response.get("error"));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponseBody.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), errors));
-
-        }
-    }
+//    @PostMapping("/msisdn/{phoneNumber}")
+//    @ApiResponse(description = "Receives phone number from frontend", responseCode = "200",
+//            content = @Content(contentSchema = @Schema(implementation = HashMap.class))
+//    )
+//    public ResponseEntity<ApiResponseBody<Map<String, String>>> getUserPhoneNumber(
+//            @PathVariable String phoneNumber
+//    ){
+//        Map<String, String> response = new HashMap<>();
+//        try {
+//            //pass into phone number update event
+//            leaderboardService.handlePhoneNumberUpdate(phoneNumber);
+//            response.put("success", "Phone number updated successfully");
+//            return ResponseEntity.ok(ApiResponseBody.success(response));
+//        } catch (RuntimeException e) {
+//            response.put("error", e.getMessage());
+//            List<String> errors = new ArrayList<>();
+//            errors.add(response.get("error"));
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponseBody.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), errors));
+//
+//        }
+//    }
 
     @GetMapping("/leaderboard/top-ranking/{rankLimit}")
     @ApiResponse(responseCode = "200", description = "Gets top ranking leaderboard entry with ties", content = @Content(array = @ArraySchema(

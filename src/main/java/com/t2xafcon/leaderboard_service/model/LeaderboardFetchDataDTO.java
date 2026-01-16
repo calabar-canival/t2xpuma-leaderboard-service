@@ -6,8 +6,8 @@ import java.util.List;
 
 @Builder
 public record LeaderboardFetchDataDTO(
-      String isSuccessful,
+      Boolean isSuccessful,
       String message,
-      List<Data> data
+      LeaderboardData data
 ) {
 }

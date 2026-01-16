@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -29,71 +30,71 @@ public class LeaderboardServiceImpl implements LeaderboardService{
     private final LeaderboardRepository leaderboardRepository;
     private final ApplicationEventPublisher publisher;
     private final WebClient yellowDotWebClient;
-    private final UserRepository userRepository;
+    //private final UserRepository userRepository;
 
-    public LeaderboardServiceImpl(LeaderboardRepository leaderboardRepository, ApplicationEventPublisher publisher, WebClient yellowDotWebClient, UserRepository userRepository) {
+    public LeaderboardServiceImpl(LeaderboardRepository leaderboardRepository, ApplicationEventPublisher publisher, WebClient yellowDotWebClient) {
         this.leaderboardRepository = leaderboardRepository;
         this.publisher = publisher;
         this.yellowDotWebClient = yellowDotWebClient;
-        this.userRepository = userRepository;
+        //this.userRepository = userRepository;
     }
 
     /**
      * Handles phone number update
      */
-    @Override
-    public void handlePhoneNumberUpdate(String phoneNumber) {
+//    @Override
+//    public void handlePhoneNumberUpdate(String phoneNumber) {
+//
+//        //publishes phone number event
+//        publisher.publishEvent(
+//                new PhoneNumberUpdatedEvent(
+//                        phoneNumber
+//                )
+//        );
+//
+//        log.info("Phone number updated!");
+//    }
 
-        //publishes phone number event
-        publisher.publishEvent(
-                new PhoneNumberUpdatedEvent(
-                        phoneNumber
-                )
-        );
-
-        log.info("Phone number updated!");
-    }
-
-    /**
-     * persists user to database if NOT exists
-     * */
-    @EventListener
-    @Async
-    @Transactional
-    public void onPhoneNumberUpdate(PhoneNumberUpdatedEvent event) {
-        try {
-            UserPersistResponseDTO userPersistResponseDTO = sendUserPhoneNumber(event.phoneNumber());
-
-            User user = User.builder()
-                    .phoneNumber(userPersistResponseDTO.data().msisdn())
-                    .points(userPersistResponseDTO.data().points())
-                    .channel(userPersistResponseDTO.data().channel())
-                    .predictionSubscriptionStatus(userPersistResponseDTO.data().isActive())
-                    .build();
-
-            if (!userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
-                userRepository.save(user);
-            }
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
+//    /**
+//     * persists user to database if NOT exists
+//     * */
+//    @EventListener
+//    @Async
+//    @Transactional
+//    public void onPhoneNumberUpdate(PhoneNumberUpdatedEvent event) {
+//        try {
+//            UserPersistResponseDTO userPersistResponseDTO = sendUserPhoneNumber(event.phoneNumber());
+//
+//            User user = User.builder()
+//                    .phoneNumber(userPersistResponseDTO.data().msisdn())
+//                    .points(userPersistResponseDTO.data().points())
+//                    .channel(userPersistResponseDTO.data().channel())
+//                    .predictionSubscriptionStatus(userPersistResponseDTO.data().isActive())
+//                    .build();
+//
+//            if (!userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+//                userRepository.save(user);
+//            }
+//
+//        } catch (RuntimeException e) {
+//            throw new RuntimeException(e.getMessage());
+//        }
+//    }
 
     /**
      * Handles persisting of user phone to yellow-dot
      */
-    public UserPersistResponseDTO sendUserPhoneNumber(String phoneNumber) {
-        // send phone number to yellow dot
-        return yellowDotWebClient.get()
-                .uri(uri -> uri.path("/api/auth/status").queryParam("msisdn", phoneNumber).build())
-                .headers(h -> h.set("Authorization", getAuthHeader(yellowDotApiKey)))
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)
-                        .flatMap(body -> Mono.error(new RuntimeException("HTTP " + clientResponse.statusCode() + ": " + body))))
-                .bodyToMono(UserPersistResponseDTO.class)
-                .block(Duration.ofSeconds(30));
-    }
+//    public UserPersistResponseDTO sendUserPhoneNumber(String phoneNumber) {
+//        // send phone number to yellow dot
+//        return yellowDotWebClient.get()
+//                .uri(uri -> uri.path("/api/auth/status").queryParam("msisdn", phoneNumber).build())
+//                .headers(h -> h.set("Authorization", getAuthHeader(yellowDotApiKey)))
+//                .retrieve()
+//                .onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)
+//                        .flatMap(body -> Mono.error(new RuntimeException("HTTP " + clientResponse.statusCode() + ": " + body))))
+//                .bodyToMono(UserPersistResponseDTO.class)
+//                .block(Duration.ofSeconds(30));
+//    }
 
     //get yellowDot auth header
     private String getAuthHeader(String token){
@@ -101,15 +102,30 @@ public class LeaderboardServiceImpl implements LeaderboardService{
     }
 
     /**
-     * Runs every two minutes
+     * Runs every five minutes
      * Fetches leaderboard data from yellow dot
      * */
-    @Scheduled(fixedDelay = 120_000)
+    @Scheduled(fixedDelay = 300_000)
     public void handleLeaderBoardDataFetch() {
         LeaderboardFetchDataDTO leaderboardData = yellowDotWebClient.get()
                 .uri(uri -> uri.path("/api/leaderboard").queryParam("pageNumber", 1).queryParam("pageSize", 100).build())
                 .headers(h -> h.set("Authorization", getAuthHeader(yellowDotApiKey)))
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, responseErr ->
+                        responseErr.bodyToMono(String.class)
+                                .flatMap(body -> {
+                                    HttpStatusCode status = responseErr.statusCode();
+
+                                    log.error("YellowDot error [{}]: {}", status.value(), body);
+
+                                    return Mono.error(
+                                            new ResponseStatusException(
+                                                    status,
+                                                    body
+                                            )
+                                    );
+                                })
+                )
                 .bodyToMono(LeaderboardFetchDataDTO.class)
                 .block();
 
@@ -121,12 +137,13 @@ public class LeaderboardServiceImpl implements LeaderboardService{
     /**
      * Listen to leaderboard fetch event
      * Upserts database (checks if exist, then updates fields )
+     * @param event event object received
      * */
     @EventListener
-    @Async
+    @Transactional
     public void onLeaderboardDataFetchedEvent(LeaderboardDataFetchedEvent event) {
-
-        event.usersFetched().data().forEach(leaderboard -> {
+        log.info("Dashboard data fetched: {}", event.usersFetched().data());
+        event.usersFetched().data().data().forEach(leaderboard -> {
             leaderboardRepository.upsertLeaderboard(
                     leaderboard.msisdn(),
                     leaderboard.points(),

@@ -8,7 +8,7 @@ import java.util.List;
 
 @Service
 public interface LeaderboardService {
-    void handlePhoneNumberUpdate(String phoneNumber);
+    //void handlePhoneNumberUpdate(String phoneNumber);
     List<LeaderboardDTO> getLeaderboardByAscendingOrder();
     List<LeaderboardDTO> getLeaderboardByDescendingOrder();
     List<LeaderboardDTO> getTopRankingUsers(int rankLimit);

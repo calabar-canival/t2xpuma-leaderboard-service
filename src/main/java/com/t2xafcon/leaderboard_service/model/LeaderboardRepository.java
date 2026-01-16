@@ -41,15 +41,15 @@ public interface LeaderboardRepository extends JpaRepository<Leaderboard, Intege
     @Query(value = """
             INSERT INTO leaderboard (phone_number, points, last_synced_at)
             VALUES (:phoneNumber, :points, :lastSyncedAt)
-            ON CONFLICT (phoneNumber)
+            ON CONFLICT (phone_number)
             DO UPDATE SET
                 points = EXCLUDED.points,
                 last_synced_at = EXCLUDED.last_synced_at
-            WHERE leaderboard.points <> EXCLUDED.points
+            WHERE leaderboard.points IS DISTINCT FROM EXCLUDED.points
             """, nativeQuery = true)
     void upsertLeaderboard(
             @Param("phoneNumber") String phoneNumber,
             @Param("points") Integer points,
-            @Param("last_synced_at") Instant lastSyncedAt
+            @Param("lastSyncedAt") Instant lastSyncedAt
     );
 }

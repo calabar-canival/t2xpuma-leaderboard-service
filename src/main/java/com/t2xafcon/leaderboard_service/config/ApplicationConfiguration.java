@@ -42,9 +42,6 @@ public class ApplicationConfiguration {
     @Value("${yellow-dot.base-url}")
     private String yellowDotBaseUrl;
 
-    @Value("${integration.shared-secret}")
-    private String sharedSecret;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
