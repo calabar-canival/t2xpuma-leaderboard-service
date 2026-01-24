@@ -1,7 +1,9 @@
 spring:
   application:
     name: leaderboard-service
-
+  profiles:
+    active: ${APP_PROFILE}
+    
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     password: ${POSTGRES_PASSWORD}
