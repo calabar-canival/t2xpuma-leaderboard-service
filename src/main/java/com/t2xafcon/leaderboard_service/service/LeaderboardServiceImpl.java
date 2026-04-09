@@ -102,11 +102,11 @@ public class LeaderboardServiceImpl implements LeaderboardService{
     }
 
     /**
-     * Runs every five minutes, changed to 30secs
+     * Runs every five minutes, changed to 5secs
      * Fetches leaderboard data from yellow dot
      * */
     //@Scheduled(fixedDelay = 300_000)
-    @Scheduled(fixedDelay = 30_000)
+    @Scheduled(fixedDelay = 5_000)
     public void handleLeaderBoardDataFetch() {
         LeaderboardFetchDataDTO leaderboardData = yellowDotWebClient.get()
                 .uri(uri -> uri.path("/api/leaderboard").queryParam("pageNumber", 1).queryParam("pageSize", 100).build())
